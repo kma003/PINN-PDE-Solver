@@ -1,5 +1,6 @@
 # Custom
 .python-version
+notebooks/
 
 # Distribution / packaging
 *.egg-info/

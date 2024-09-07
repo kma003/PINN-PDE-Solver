@@ -3,8 +3,10 @@ from setuptools import setup, find_packages
 from setuptools.command.install import install
 
 requirements = [
-	"numpy",
+	"numpy<2.0.0",
 	"matplotlib",
+	"scipy",
+	"torch",
 ]
 
 setup(
