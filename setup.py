@@ -2,6 +2,13 @@ import os
 from setuptools import setup, find_packages
 from setuptools.command.install import install
 
+dirs = [
+    "data",
+]
+
+for d in dirs:
+    os.makedirs(d, exist_ok=True)
+
 requirements = [
 	"numpy<2.0.0",
 	"matplotlib",
