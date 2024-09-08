@@ -5,7 +5,7 @@ import torch.nn.functional as F
 class MLP_8(nn.Module):
 
     def __init__(self,num_inputs,num_outputs,hidden_size=20):
-
+        super(MLP_8, self).__init__()
         self.l1 = nn.Linear(num_inputs,hidden_size)
         self.l2 = nn.Linear(hidden_size,hidden_size)
         self.l3 = nn.Linear(hidden_size,hidden_size)
