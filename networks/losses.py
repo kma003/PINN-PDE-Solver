@@ -12,10 +12,12 @@ class SupervisedLoss(nn.Module):
         return u_loss + v_loss
 
 class PhysicsInformedLoss(nn.Module):
-    def __init__(self,nu=0.01):
+    def __init__(self):
         super(PhysicsInformedLoss,self).__init__()
-        self.nu = nu
         self.criterion = nn.MSELoss()
+        # Learnable parameters in physical eqs
+        self.lambda1 = nn.Parameter(torch.rand(1),requires_grad=True,dtype=torch.float32) 
+        self.lambda2 = nn.Parameter(torch.rand(1),requires_grad=True,dtype=torch.float32)
         
     
     def forward(self,x,y,t,u,v,p):
@@ -33,8 +35,8 @@ class PhysicsInformedLoss(nn.Module):
         u_yy = torch.autograd.grad(u_y,y,grad_outputs=torch.ones_like(u_y),create_graph=True)[0]
         v_yy = torch.autograd.grad(v_y,y,grad_outputs=torch.ones_like(v_y),create_graph=True)[0]
 
-        f = u_t + (u*u_x + v*u_y) + p_x - self.nu * (u_xx + u_yy)
-        g = v_t = (u*v_x + v*v+y) + p_y - self.nu * (v_xx + v_yy)
+        f = u_t + self.lambda1 * (u*u_x + v*u_y) + p_x - self.lambda2 * (u_xx + u_yy)
+        g = v_t = self.lambda1 * (u*v_x + v*v+y) + p_y - self.lambda2 * (v_xx + v_yy)
 
         f_loss = self.criterion(f,torch.zeros(f.shape)) # TODO Confirm that this is calculating the error correctly
         g_loss = self.criterion(g,torch.zeros(g.shape))
