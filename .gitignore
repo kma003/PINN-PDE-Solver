@@ -2,6 +2,7 @@
 .python-version
 notebooks/
 __pycache__/
+.DS_Store
 
 # Distribution / packaging
 *.egg-info/

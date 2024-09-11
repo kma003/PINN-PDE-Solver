@@ -1,62 +1,41 @@
 import numpy as np
 import os
+import pickle
 import torch
-import torch.nn as nn
-from scipy.io import loadmat
 
-from defs import DATA_DIR
-from networks.losses import SupervisedLoss,PhysicsInformedLoss
-from networks.MLP_8 import MLP_8
+from src.ns_pinn import NS_PINN
+from src.defs import DATA_DIR
 
-class NS_PINN():
-    """ Navier-Stokes solver using PINN """
+with open(os.path.join(DATA_DIR,'cylinder_wake_data.pkl'), 'rb') as f:
+    data = pickle.load(f)
 
-    def __init__(self,x,y,t,u,v,p):
-        self.x = torch.Tensor(x,dtype=torch.float32)
-        self.y = torch.Tensor(y,dtype=torch.float32)
-        self.t = torch.Tensor(t,dtype=torch.float32)
-        self.u = torch.Tensor(u,dtype=torch.float32)
-        self.v = torch.Tensor(v,dtype=torch.float32)
-        self.p = torch.Tensor(p,dtype=torch.float32)
+t = data['t'] # Shape T x 1
+x = data['x'] # Shape N x 1
+y = data['y'] # Shape N x 1
+U = data['U'] # Shape N x T
+V = data['V'] # Shape N x T
+P = data['P'] # Shape N x T
 
-        self.model = MLP_8(num_inputs=3,num_outputs=2)
-        self.supervised_loss = SupervisedLoss()
-        self.physics_informed_loss = PhysicsInformedLoss()
-        self.params = list(self.model.parameters()).extend(self.physics_informed_loss.parameters())
-    
-        self.init_optim_flag = False
+n_time = t.shape[0]
+n_pos = x.shape[0]
+n_total = n_time * n_pos
 
-    def init_optimizer(self,lr=1e-4,max_iter=20,max_eval=None,tolerance_grad=1e-7,
-                    tolerance_change=1e-9,history_size=100,line_search_fun='strong_wolfe'):
+# Repeat vector of positional coordinates for each point in time
+x_repeated = np.expand_dims(np.tile(x,n_time),axis=1) # Shape (N*T) x 1
+y_repeated = np.expand_dims(np.tile(y,n_time),axis=1) # Shape (N*T) x 1
 
-        self.optim = torch.optim.LBFGS(self.params,lr=lr,max_iter=max_iter,max_eval=max_eval,
-                                       tolerance_grad=tolerance_grad,tolerance_change=tolerance_change,
-                                       history_size=history_size,line_search_fn=line_search_fun)
-        self.init_optim_flag = True
+# Repeat each timepoint element for all positions 
+t_repeated = np.repeat(t,n_pos,axis=0) # Shape (N*T) x 1
 
-        return
+# Flatten matrices into vectors
+u_flattened = np.reshape(U,(n_total,1)) # Shape (N*T) x 1
+v_flattened = np.reshape(V,(n_total,1)) # Shape (N*T) x 1
+p_flattened = np.reshape(P,(n_total,1)) # Shape (N*T) x 1
 
-    def closure(self):
-        '''
-        Closure function required for LBFGS optimizer
-        '''
-        if self.init_optim_flag:
-            self.optim.zero_grad()
-            p_pred,psi_pred = self.model(self.x,self.y,self.t)
-            u_pred = torch.autograd.grad(psi_pred,self.y,grad_outputs=torch.ones_like(psi_pred),create_graph=True)[0]
-            v_pred = -1*torch.autograd.grad(psi_pred,self.x,grad_outputs=torch.ones_like(psi_pred),create_graph=True)[0]
+# Set up PINN and fit data
+pinn = NS_PINN(x=x_repeated,y=y_repeated,t=t_repeated,
+               u=u_flattened,v=v_flattened,p=p_flattened)
 
-            loss1 = SupervisedLoss(self.u,self.v,u_pred,v_pred)
-            loss2 = PhysicsInformedLoss(self.x,self.y,self.t,u_pred,v_pred)
-            loss = loss1 + loss2
-            loss.backward()
-        else:
-            raise Exception("L-BFGS optimizer hasn't been initialzed yet")
+# Fit data
+pinn.fit()
 
-        return loss
-    
-    def fit(self):
-        # TODO Set up functionality for minibatching
-        # This is only called once for full-batch training
-        self.model.train()
-        self.optim.step()
