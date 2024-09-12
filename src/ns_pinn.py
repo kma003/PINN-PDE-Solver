@@ -24,9 +24,9 @@ class NS_PINN():
         self.params = list(self.model.parameters())
         self.params.extend(list(self.physics_informed_loss.parameters()))
 
-        self.init_optimizer()
+        self.set_optimizer()
 
-    def init_optimizer(self,lr=1e-4,max_iter=20,max_eval=None,tolerance_grad=1e-7,
+    def set_optimizer(self,lr=1e-4,max_iter=20,max_eval=None,tolerance_grad=1e-7,
                     tolerance_change=1e-9,history_size=100,line_search_fun='strong_wolfe'):
 
         self.optim = torch.optim.LBFGS(self.params,lr=lr,max_iter=max_iter,max_eval=max_eval,
@@ -40,7 +40,7 @@ class NS_PINN():
         Closure function required for LBFGS optimizer
         '''
         self.optim.zero_grad()
-        input_data = torch.cat((self.x,self.y,self.t), dim=1)
+        input_data = torch.cat((self.x,self.y,self.t), dim=1).to(self.device)
         out = self.model(input_data)
         p_pred,psi_pred = out[:,0],out[:,1]
         u_pred = torch.autograd.grad(psi_pred,self.y,grad_outputs=torch.ones_like(psi_pred),create_graph=True)[0]
@@ -50,9 +50,10 @@ class NS_PINN():
         loss2 = self.physics_informed_loss(self.x,self.y,self.t,u_pred,v_pred,p_pred)
         loss = loss1 + loss2
         loss.backward()
+        print(f"Loss 1: {loss1}\nLoss 2: {loss2}")
 
         return loss
-    
+
     def fit(self):
         # TODO Set up functionality for minibatching
         # This is only called once for full-batch training
@@ -60,6 +61,20 @@ class NS_PINN():
         self.optim.step(self.closure)
 
         return
+
+    def predict(self,x,y,t):
+
+        x = torch.tensor(x,requires_grad=True,dtype=torch.float32,device=self.device)
+        y = torch.tensor(y,requires_grad=True,dtype=torch.float32,device=self.device)
+        t = torch.tensor(t,requires_grad=True,dtype=torch.float32,device=self.device)
+        data = torch.cat((x,y,t), dim=1).to(self.device)
+
+        out = self.model(data)
+        p_pred,psi_pred = out[:,0],out[:,1]
+        u_pred = torch.autograd.grad(psi_pred,y,grad_outputs=torch.ones_like(psi_pred),create_graph=True)[0]
+        v_pred = -1*torch.autograd.grad(psi_pred,x,grad_outputs=torch.ones_like(psi_pred),create_graph=True)[0]
+
+        return p_pred.detach().cpu().numpy(),u_pred.detach().cpu().numpy(),v_pred.detach().cpu().numpy()
 
     def save_model(self,fname):
         torch.save(self.model.state_dict(),os.path.join(SAVED_MODELS_DIR,fname))
