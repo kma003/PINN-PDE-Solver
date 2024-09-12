@@ -1,6 +1,8 @@
 import numpy as np
+import os
 import torch
 
+from defs import SAVED_MODELS_DIR
 from networks.losses import SupervisedLoss,PhysicsInformedLoss
 from networks.MLP_8 import MLP_8
 
@@ -49,7 +51,6 @@ class NS_PINN():
         loss = loss1 + loss2
         loss.backward()
 
-
         return loss
     
     def fit(self):
@@ -57,3 +58,13 @@ class NS_PINN():
         # This is only called once for full-batch training
         self.model.train()
         self.optim.step(self.closure)
+
+        return
+
+    def save_model(self,fname):
+        torch.save(self.model.state_dict(),os.path.join(SAVED_MODELS_DIR,fname))
+        return
+
+    def load_model(self,model_name,model_dir=SAVED_MODELS_DIR):
+        self.model = torch.load(os.path.join(model_dir,model_name))
+        return

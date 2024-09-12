@@ -1,8 +1,9 @@
 # Custom
 .python-version
-notebooks/
-__pycache__/
 .DS_Store
+notebooks/
+saved_models/
+__pycache__/
 
 # Distribution / packaging
 *.egg-info/

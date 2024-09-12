@@ -32,7 +32,7 @@ v_flattened = np.reshape(V,(n_total,1)) # Shape (N*T) x 1
 p_flattened = np.reshape(P,(n_total,1)) # Shape (N*T) x 1
 
 np.random.seed(0)
-n_samples = 5000
+n_samples = 25000
 idxs = np.random.choice(n_total,size=n_samples,replace=False)
 
 # Set up PINN and fit data
@@ -40,5 +40,7 @@ pinn = NS_PINN(x=x_repeated[idxs],y=y_repeated[idxs],t=t_repeated[idxs],
                u=u_flattened[idxs],v=v_flattened[idxs],p=p_flattened[idxs])
 
 # Fit data
+print(list(pinn.physics_informed_loss.parameters()))
 pinn.fit()
-
+pinn.save_model('model.pt')
+print(list(pinn.physics_informed_loss.parameters()))

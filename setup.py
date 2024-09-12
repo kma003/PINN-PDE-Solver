@@ -4,6 +4,7 @@ from setuptools.command.install import install
 
 dirs = [
     "data",
+    "networks/saved_models"
 ]
 
 for d in dirs:
