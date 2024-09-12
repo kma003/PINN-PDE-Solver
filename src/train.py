@@ -1,7 +1,6 @@
 import numpy as np
 import os
 import pickle
-import torch
 
 from src.ns_pinn import NS_PINN
 from src.defs import DATA_DIR
@@ -32,9 +31,13 @@ u_flattened = np.reshape(U,(n_total,1)) # Shape (N*T) x 1
 v_flattened = np.reshape(V,(n_total,1)) # Shape (N*T) x 1
 p_flattened = np.reshape(P,(n_total,1)) # Shape (N*T) x 1
 
+np.random.seed(0)
+n_samples = 5000
+idxs = np.random.choice(n_total,size=n_samples,replace=False)
+
 # Set up PINN and fit data
-pinn = NS_PINN(x=x_repeated,y=y_repeated,t=t_repeated,
-               u=u_flattened,v=v_flattened,p=p_flattened)
+pinn = NS_PINN(x=x_repeated[idxs],y=y_repeated[idxs],t=t_repeated[idxs],
+               u=u_flattened[idxs],v=v_flattened[idxs],p=p_flattened[idxs])
 
 # Fit data
 pinn.fit()
