@@ -16,8 +16,9 @@ class PhysicsInformedLoss(nn.Module):
         super(PhysicsInformedLoss,self).__init__()
         self.criterion = nn.MSELoss()
         # Learnable parameters in physical eqs
-        self.lambda1 = nn.Parameter(torch.rand(1),requires_grad=True)
-        self.lambda2 = nn.Parameter(torch.rand(1),requires_grad=True)
+        self.lambda1 = nn.Parameter(torch.rand(1),requires_grad=True).type(torch.float32)
+        self.lambda2 = nn.Parameter(torch.rand(1),requires_grad=True).type(torch.float32)
+        
         
     
     def forward(self,x,y,t,u,v,p):

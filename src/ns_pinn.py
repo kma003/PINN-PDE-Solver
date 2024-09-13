@@ -24,10 +24,11 @@ class NS_PINN():
         self.params = list(self.model.parameters())
         self.params.extend(list(self.physics_informed_loss.parameters()))
 
+        self.steps = 0
         self.set_optimizer()
 
-    def set_optimizer(self,lr=1e-4,max_iter=20,max_eval=None,tolerance_grad=1e-7,
-                    tolerance_change=1e-9,history_size=100,line_search_fun='strong_wolfe'):
+    def set_optimizer(self,lr=1,max_iter=50000,max_eval=50000,tolerance_grad=1e-5,
+                    tolerance_change=0.5 * np.finfo(float).eps,history_size=50,line_search_fun='strong_wolfe'):
 
         self.optim = torch.optim.LBFGS(self.params,lr=lr,max_iter=max_iter,max_eval=max_eval,
                                        tolerance_grad=tolerance_grad,tolerance_change=tolerance_change,
@@ -50,7 +51,9 @@ class NS_PINN():
         loss2 = self.physics_informed_loss(self.x,self.y,self.t,u_pred,v_pred,p_pred)
         loss = loss1 + loss2
         loss.backward()
-        print(f"Loss 1: {loss1}\nLoss 2: {loss2}")
+
+        print(f"Step #{self.steps}, Total Loss: {loss}, Supervised Loss: {loss1}, Physics Loss: {loss2}",end="\r")
+        self.steps += 1
 
         return loss
 

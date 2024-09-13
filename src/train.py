@@ -32,15 +32,32 @@ v_flattened = np.reshape(V,(n_total,1)) # Shape (N*T) x 1
 p_flattened = np.reshape(P,(n_total,1)) # Shape (N*T) x 1
 
 np.random.seed(0)
-n_samples = 25000
+n_samples = 5000
 idxs = np.random.choice(n_total,size=n_samples,replace=False)
+x_train = x_repeated[idxs]
+y_train = y_repeated[idxs]
+t_train = t_repeated[idxs]
+u_train = u_flattened[idxs]
+v_train = v_flattened[idxs]
+p_train = p_flattened[idxs]
 
 # Set up PINN and fit data
-pinn = NS_PINN(x=x_repeated[idxs],y=y_repeated[idxs],t=t_repeated[idxs],
-               u=u_flattened[idxs],v=v_flattened[idxs],p=p_flattened[idxs])
+pinn = NS_PINN(x=x_train,y=y_train,t=t_train,u=u_train,v=v_train,p=p_train)
 
 # Fit data
 print(list(pinn.physics_informed_loss.parameters()))
 pinn.fit()
-pinn.save_model('model.pt')
+#pinn.save_model('model.pt')
 print(list(pinn.physics_informed_loss.parameters()))
+
+p_pred,u_pred,v_pred = pinn.predict(x_train,y_train,t_train)
+
+def preprocess(x,y,t):
+    x_processed = (x - np.min(x)) / (np.max(x) - np.min(x))
+    y_processed = (y - np.min(y)) / (np.max(y) - np.min(y))
+    t_processed = (y - np.min(t)) / (np.max(t) - np.min(t))
+
+    return x_processed,y_processed,t_processed
+
+def evaluate():
+    pass
