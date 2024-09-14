@@ -45,12 +45,8 @@ p_train = p_flattened[idxs]
 pinn = NS_PINN(x=x_train,y=y_train,t=t_train,u=u_train,v=v_train,p=p_train)
 
 # Fit data
-print(list(pinn.physics_informed_loss.parameters()))
-#print(pinn.physics_informed_loss.lambda1,pinn.physics_informed_loss.lambda2)
 pinn.fit()
-#pinn.save_model('model.pt')
-print(list(pinn.physics_informed_loss.parameters()))
-#print(pinn.physics_informed_loss.lambda1,pinn.physics_informed_loss.lambda2)
+pinn.save_model('model.pt')
 
 p_pred,u_pred,v_pred = pinn.predict(x_train,y_train,t_train)
 

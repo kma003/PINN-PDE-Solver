@@ -39,7 +39,7 @@ class PhysicsInformedLoss(nn.Module):
         f = u_t + self.lambda1 * (u*u_x + v*u_y) + p_x - self.lambda2 * (u_xx + u_yy)
         g = v_t + self.lambda1 * (u*v_x + v*v_y) + p_y - self.lambda2 * (v_xx + v_yy)
 
-        f_loss = self.criterion(f,torch.zeros(f.shape,device=self.device)) # TODO Confirm that this is calculating the error correctly
+        f_loss = self.criterion(f,torch.zeros(f.shape,device=self.device))
         g_loss = self.criterion(g,torch.zeros(g.shape,device=self.device))
 
         return f_loss + g_loss
