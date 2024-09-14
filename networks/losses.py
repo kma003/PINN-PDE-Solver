@@ -18,10 +18,8 @@ class PhysicsInformedLoss(nn.Module):
         self.device =torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         # Learnable parameters in physical eqs
-        self.lambda1 = nn.Parameter(torch.rand(1),requires_grad=True).type(torch.float32).to(self.device)
-        self.lambda2 = nn.Parameter(torch.rand(1),requires_grad=True).type(torch.float32).to(self.device)
-        
-        
+        self.lambda1 = torch.tensor(1.0)#nn.Parameter(torch.rand(1,device=self.device,dtype=torch.float32),requires_grad=True)
+        self.lambda2 = torch.tensor(0.01)#nn.Parameter(torch.rand(1,device=self.device,dtype=torch.float32),requires_grad=True)
     
     def forward(self,x,y,t,u,v,p):
         # Differentiate network outputs required in the physical system of equations

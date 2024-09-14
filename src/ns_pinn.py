@@ -52,7 +52,7 @@ class NS_PINN():
         loss = loss1 + loss2
         loss.backward()
 
-        print(f"Step #{self.steps}, Total Loss: {loss}, Supervised Loss: {loss1}, Physics Loss: {loss2}",end="\r")
+        print(f"Step #{self.steps}, Total Loss: {loss}, Supervised Loss: {loss1}, Physics Loss: {loss2}, lambda1: {self.physics_informed_loss.lambda1.item()}, lambda2: {self.physics_informed_loss.lambda2.item()}",end="\r")
         self.steps += 1
 
         return loss
