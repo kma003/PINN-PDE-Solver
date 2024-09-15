@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 import os
 import pickle
 
@@ -32,7 +33,7 @@ v_flattened = np.reshape(V,(n_total,1)) # Shape (N*T) x 1
 p_flattened = np.reshape(P,(n_total,1)) # Shape (N*T) x 1
 
 np.random.seed(0)
-n_samples = 5000
+n_samples = 50000
 idxs = np.random.choice(n_total,size=n_samples,replace=False)
 x_train = x_repeated[idxs]
 y_train = y_repeated[idxs]
@@ -47,8 +48,24 @@ pinn = NS_PINN(x=x_train,y=y_train,t=t_train,u=u_train,v=v_train,p=p_train)
 # Fit data
 pinn.fit()
 pinn.save_model('model.pt')
+#pinn.load_model('model.pt')
+p_pred,u_pred,v_pred = pinn.predict(x_repeated,y_repeated,t_repeated)
 
-p_pred,u_pred,v_pred = pinn.predict(x_train,y_train,t_train)
+p_pred = np.reshape(p_pred,(n_pos,n_time))
+
+def pressure_contourf(p,x,y,timestep):
+    num_x = len(set(x))
+    num_y = len(set(y))
+    p_plot = np.reshape(p[:,timestep],(num_y,num_x))
+
+    plt.figure()
+    plt.contourf(p_plot)
+    plt.show()
+
+    return
+
+pressure_contourf(p_pred,x,y,timestep=0)
+
 
 def preprocess(x,y,t):
     x_processed = (x - np.min(x)) / (np.max(x) - np.min(x))
@@ -57,5 +74,4 @@ def preprocess(x,y,t):
 
     return x_processed,y_processed,t_processed
 
-def evaluate():
-    pass
+

@@ -27,7 +27,7 @@ class NS_PINN():
         self.steps = 0
         self.set_optimizer()
 
-    def set_optimizer(self,lr=1,max_iter=50000,max_eval=50000,tolerance_grad=1e-5,
+    def set_optimizer(self,lr=1,max_iter=200000,max_eval=50000,tolerance_grad=1e-5,
                     tolerance_change=0.5 * np.finfo(float).eps,history_size=50,line_search_fun='strong_wolfe'):
 
         self.optim = torch.optim.LBFGS(self.params,lr=lr,max_iter=max_iter,max_eval=max_eval,
@@ -45,7 +45,7 @@ class NS_PINN():
         out = self.model(input_data)
         p_pred,psi_pred = out[:,0],out[:,1]
         u_pred = torch.autograd.grad(psi_pred,self.y,grad_outputs=torch.ones_like(psi_pred),create_graph=True)[0]
-        v_pred = -1*torch.autograd.grad(psi_pred,self.x,grad_outputs=torch.ones_like(psi_pred),create_graph=True)[0]
+        v_pred = -1.0*torch.autograd.grad(psi_pred,self.x,grad_outputs=torch.ones_like(psi_pred),create_graph=True)[0]
 
         loss1 = self.supervised_loss(self.u,self.v,u_pred,v_pred)
         loss2 = self.physics_informed_loss(self.x,self.y,self.t,u_pred,v_pred,p_pred)
@@ -66,12 +66,13 @@ class NS_PINN():
         return
 
     def predict(self,x,y,t):
-
+        
         x = torch.tensor(x,requires_grad=True,dtype=torch.float32,device=self.device)
         y = torch.tensor(y,requires_grad=True,dtype=torch.float32,device=self.device)
         t = torch.tensor(t,requires_grad=True,dtype=torch.float32,device=self.device)
         data = torch.cat((x,y,t), dim=1).to(self.device)
-
+        
+        self.model.eval()
         out = self.model(data)
         p_pred,psi_pred = out[:,0],out[:,1]
         u_pred = torch.autograd.grad(psi_pred,y,grad_outputs=torch.ones_like(psi_pred),create_graph=True)[0]
@@ -84,5 +85,6 @@ class NS_PINN():
         return
 
     def load_model(self,model_name,model_dir=SAVED_MODELS_DIR):
-        self.model = torch.load(os.path.join(model_dir,model_name))
+        self.model = MLP_8(num_inputs=3,num_outputs=2).to(self.device)
+        self.model.load_state_dict(torch.load(os.path.join(model_dir,model_name)))
         return

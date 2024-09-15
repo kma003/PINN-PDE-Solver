@@ -13,7 +13,9 @@ class MLP_8(nn.Module):
         self.l5 = nn.Linear(hidden_size,hidden_size)
         self.l6 = nn.Linear(hidden_size,hidden_size)
         self.l7 = nn.Linear(hidden_size,hidden_size)
-        self.l8 = nn.Linear(hidden_size,num_outputs)
+        self.l8 = nn.Linear(hidden_size,hidden_size)
+        self.l9 = nn.Linear(hidden_size,hidden_size)
+        self.l10 = nn.Linear(hidden_size,num_outputs)
 
     def forward(self,x):
 
@@ -24,6 +26,8 @@ class MLP_8(nn.Module):
         x = self.l5(F.tanh(x))
         x = self.l6(F.tanh(x))
         x = self.l7(F.tanh(x))
-        x = self.l8(x)
+        x = self.l8(F.tanh(x))
+        x = self.l9(F.tanh(x))
+        x = self.l10(F.tanh(x))
         
         return x
